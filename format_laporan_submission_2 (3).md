@@ -124,6 +124,9 @@ plt.xlabel('Rating')
 plt.ylabel('Frekuensi')
 plt.show()
 ```
+![distribusi rating](https://github.com/user-attachments/assets/54f26e18-e377-4391-9edd-5c5e7a7388a2)
+
+
 
 **2. Jumlah Rating per Film**
 - Sebagian besar film mendapatkan jumlah rating yang sedikit, memperlihatkan pola distribusi *long-tail*.
@@ -134,6 +137,8 @@ plt.xlabel('Number of Ratings')
 plt.ylabel('Frequency')
 plt.show()
 ```
+![jumlah rating per film](https://github.com/user-attachments/assets/3ea1e05c-b62c-4f63-bb85-f256a3fc6e22)
+
 
 **3. Jumlah Rating per Pengguna**
 - Sebagian besar pengguna memberikan rating untuk jumlah film yang terbatas, menunjukkan sparsitas data.
@@ -144,6 +149,8 @@ plt.xlabel('Number of Ratings')
 plt.ylabel('Frequency')
 plt.show()
 ```
+![jumlah rating per pengguna](https://github.com/user-attachments/assets/13fb16e3-a4c8-4d0f-ae0c-112b491608fd)
+
 
 **4. Rata-Rata Rating per Film**
 - Rata-rata rating menunjukkan bias positif, di mana film lebih cenderung diberi rating tinggi.
@@ -154,6 +161,8 @@ plt.xlabel('Average Rating')
 plt.ylabel('Frequency')
 plt.show()
 ```
+![rata-rata rating per film](https://github.com/user-attachments/assets/de5fc1e8-62f2-4896-8749-6df04a1a1f4e)
+
 
 **5. Rata-Rata Rating per Pengguna**
 - Pola rating pengguna menunjukkan keragaman perilaku pemberian rating.
@@ -164,6 +173,9 @@ plt.xlabel('Average Rating')
 plt.ylabel('Frequency')
 plt.show()
 ```
+
+![rata-rata rating per user](https://github.com/user-attachments/assets/985f12c4-5c54-45f4-a06d-139eb321f1b9)
+
 ### Insight Penting
 - Dataset bersifat sparsitas tinggi (data pengguna memberikan rating pada sebagian kecil film).
 - Bias positif terlihat pada pola rating pengguna.
@@ -210,6 +222,16 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, strati
 
 **Alasan:** Pembagian ini memastikan bahwa model dapat dilatih dengan data yang memadai dan dievaluasi pada data baru, sehingga performanya dapat diukur dengan lebih akurat.
 
+### 4. Pembuatan Matriks Rating dengan Pivot Table
+Tahap selanjutnya adalah kita membuat matriks rating dengan pivot table. kode ini mengubah data pelatihan dari format panjang menjadi format matriks yang memetakan setiap pengguna ke setiap film dengan nilai rating yang diberikan dan membuat Salinan Matriks dengan Mengisi Nilai NaN dengan 0
+
+```python
+r_matrix = X_train.pivot_table(values='rating', index='user_id', columns='movie_id')
+r_matrix_dummy = r_matrix.copy().fillna(0)
+```
+
+**Alasan:** Matriks ini mempermudah analisis berbasis matriks, seperti dalam Collaborative Filtering, di mana algoritma memanfaatkan data dari pengguna serupa atau film serupa untuk memberikan rekomendasi. Format ini juga lebih efisien dalam mengakses informasi rating pengguna terhadap film tertentu dibandingkan format data panjang (long format).
+
 ---
 
 # Modelling
@@ -220,8 +242,6 @@ Tahapan ini membahas model sistem rekomendasi yang dibuat untuk menyelesaikan pe
 Matriks kesamaan kosinus (cosine_sim) akan digunakan untuk mencari pengguna-pengguna yang memiliki pola rating serupa, sehingga bisa merekomendasikan film berdasarkan kesamaan preferensi antar pengguna.
 
 ```python
-r_matrix = X_train.pivot_table(values='rating', index='user_id', columns='movie_id')
-r_matrix_dummy = r_matrix.copy().fillna(0)
 cosine_sim = cosine_similarity(r_matrix_dummy, r_matrix_dummy)
 cosine_sim = pd.DataFrame(cosine_sim, index=r_matrix.index, columns=r_matrix.index)
 ```
@@ -366,6 +386,110 @@ svd_results = cross_validate(svd, data, measures=['RMSE'], cv=5, verbose=True)
 - **Kelemahan**:
   - Membutuhkan proses pelatihan yang lebih kompleks.
   - Memerlukan penyesuaian parameter agar optimal.
+ 
+## Top-N Recommendation
+Bagian terakhir dari kode menghasilkan Top-N Recommendations menggunakan berbagai model algoritma yang sudah di kembangkan di atas. Rekomendasi ini dihasilkan dengan memprediksi rating untuk semua pasangan user-item, mengurutkan film berdasarkan prediksi rating tertinggi, dan menampilkan 10 film terbaik untuk setiap pengguna. Misalnya, untuk lima pengguna pertama, film yang direkomendasikan ditampilkan beserta prediksi ratingnya.
+
+Dari hasil top n recommendation dan perbandingan model saya memilih SVD sebagai model terbaik karena model ini dapat menangani dataset besar dan sparsity, memberikan rekomendasi yang lebih personal dan akurat. Pendekatan ini sangat sesuai untuk aplikasi dunia nyata, seperti platform streaming film.
+
+Berikut hasilnya dengan mengambil beberapa user:
+
+### Baseline Model Top-N Recommendations
+
+| User ID | Movie                                                    | Predicted Rating |
+|---------|----------------------------------------------------------|------------------|
+| 196     | Toy Story (1995)                                         | 3.00             |
+| 196     | GoldenEye (1995)                                         | 3.00             |
+| 196     | Four Rooms (1995)                                        | 3.00             |
+| 196     | Get Shorty (1995)                                        | 3.00             |
+| 196     | Copycat (1995)                                           | 3.00             |
+| 196     | Shanghai Triad (Yao a yao yao dao waipo qiao) (1995)     | 3.00             |
+| 196     | Twelve Monkeys (1995)                                    | 3.00             |
+| 196     | Babe (1995)                                              | 3.00             |
+| 196     | Dead Man Walking (1995)                                  | 3.00             |
+| 196     | Richard III (1995)                                       | 3.00             |
+
+
+### User-Based Collaborative Filtering (Mean) Top-N Recommendations
+
+| User ID | Movie                                                    | Predicted Rating |
+|---------|----------------------------------------------------------|------------------|
+| 196     | Great Day in Harlem, A (1994)                            | 5.00             |
+| 196     | Two or Three Things I Know About Her (1966)              | 5.00             |
+| 196     | They Made Me a Criminal (1939)                           | 5.00             |
+| 196     | Prefontaine (1997)                                       | 5.00             |
+| 196     | Letter From Death Row, A (1998)                          | 5.00             |
+| 196     | Star Kid (1997)                                          | 5.00             |
+| 196     | Faust (1994)                                             | 5.00             |
+| 196     | Saint of Fort Washington, The (1993)                     | 5.00             |
+| 196     | Santa with Muscles (1996)                                | 5.00             |
+| 196     | World of Apu, The (Apur Sansar) (1959)                   | 5.00             |
+
+
+### User-Based Collaborative Filtering (Weighted Mean) Top-N Recommendations
+
+| User ID | Movie                                                    | Predicted Rating |
+|---------|----------------------------------------------------------|------------------|
+| 1       | Prefontaine (1997)                                       | 5.00             |
+| 1       | Great Day in Harlem, A (1994)                            | 5.00             |
+| 1       | They Made Me a Criminal (1939)                           | 5.00             |
+| 1       | Letter From Death Row, A (1998)                          | 5.00             |
+| 1       | Star Kid (1997)                                          | 5.00             |
+| 1       | Faust (1994)                                             | 5.00             |
+| 1       | Saint of Fort Washington, The (1993)                     | 5.00             |
+| 1       | Santa with Muscles (1996)                                | 5.00             |
+| 1       | World of Apu, The (Apur Sansar) (1959)                   | 5.00             |
+| 1       | Aiqing wansui (1994)                                     | 5.00             |
+
+
+### NMF Top-N Recommendations
+
+| User ID | Movie                                                    | Predicted Rating |
+|---------|----------------------------------------------------------|------------------|
+| 196     | Secrets & Lies (1996)                                    | 4.28             |
+| 196     | Waiting for Guffman (1996)                               | 4.25             |
+| 196     | Being There (1979)                                       | 4.18             |
+| 196     | Men in Black (1997)                                      | 4.12             |
+| 196     | Raising Arizona (1987)                                   | 4.10             |
+| 196     | Stand by Me (1986)                                       | 4.08             |
+| 196     | Fish Called Wanda, A (1988)                              | 4.08             |
+| 196     | Babe (1995)                                              | 4.02             |
+| 196     | Shall We Dance? (1996)                                   | 4.01             |
+| 196     | Kolya (1996)                                             | 3.95             |
+
+
+### kNN Top-N Recommendations
+
+| User ID | Movie                                                    | Predicted Rating |
+|---------|----------------------------------------------------------|------------------|
+| 196     | English Patient, The (1996)                              | 4.86             |
+| 196     | Secrets & Lies (1996)                                    | 4.56             |
+| 196     | Babe (1995)                                              | 4.42             |
+| 196     | Stand by Me (1986)                                       | 4.39             |
+| 196     | Being There (1979)                                       | 4.39             |
+| 196     | Fish Called Wanda, A (1988)                              | 4.24             |
+| 196     | Shall We Dance? (1996)                                   | 4.20             |
+| 196     | Raising Arizona (1987)                                   | 4.12             |
+| 196     | American President, The (1995)                           | 4.04             |
+| 196     | Mrs. Brown (Her Majesty, Mrs. Brown) (1997)              | 4.03             |
+
+
+### SVD Top-N Recommendations
+
+| User ID | Movie                                                    | Predicted Rating |
+|---------|----------------------------------------------------------|------------------|
+| 196     | Secrets & Lies (1996)                                    | 4.48             |
+| 196     | English Patient, The (1996)                              | 4.28             |
+| 196     | Being There (1979)                                       | 4.26             |
+| 196     | Babe (1995)                                              | 4.21             |
+| 196     | Cold Comfort Farm (1995)                                 | 4.19             |
+| 196     | Fish Called Wanda, A (1988)                              | 4.12             |
+| 196     | Mrs. Brown (Her Majesty, Mrs. Brown) (1997)              | 4.06             |
+| 196     | Waiting for Guffman (1996)                               | 3.99             |
+| 196     | Kolya (1996)                                             | 3.94             |
+| 196     | Groundhog Day (1993)                                     | 3.90             |
+
+
 ---
 
 ## Evaluation
@@ -439,85 +563,9 @@ Berikut adalah hasil evaluasi model berdasarkan nilai *Root Mean Squared Error* 
 ### Solusi 2: Metrik Evaluasi
 - **Hasil**: Penggunaan RMSE sebagai metrik memberikan kejelasan dalam menilai performa model.
 - **Dampak**: Implementasi solusi dapat diukur secara objektif, memudahkan evaluasi keberhasilan.
+  
 ---
-## Top-N Recommendation
-Sebagai hasil akhir, berikut adalah *Top-N Recommendation* menggunakan model SVD sebagai model terbaik yang dipilih berdasarkan hasil evaluasi. Rekomendasi ini dihasilkan dengan memprediksi rating untuk semua pasangan pengguna-item dan menyajikan 10 film terbaik untuk setiap pengguna.
 
-### Berikut Output Hasil Rekomendasi
-## User 196 Recommendations
-| Movie                              | Predicted Rating |
-|------------------------------------|------------------|
-| Secrets & Lies (1996)             | 4.42             |
-| English Patient, The (1996)       | 4.39             |
-| Being There (1979)                | 4.19             |
-| Stand by Me (1986)                | 4.18             |
-| Groundhog Day (1993)              | 4.17             |
-| Fish Called Wanda, A (1988)       | 4.08             |
-| Babe (1995)                       | 4.01             |
-| Mrs. Brown (Her Majesty, Mrs. Brown) (1997) | 3.99  |
-| American President, The (1995)    | 3.96             |
-| Kolya (1996)                      | 3.93             |
-
-## User 186 Recommendations
-| Movie                              | Predicted Rating |
-|------------------------------------|------------------|
-| Silence of the Lambs, The (1991)  | 4.59             |
-| Air Force One (1997)              | 4.42             |
-| Fugitive, The (1993)              | 4.40             |
-| Clear and Present Danger (1994)   | 4.28             |
-| Unforgiven (1992)                 | 4.27             |
-| Rock, The (1996)                  | 4.15             |
-| Firm, The (1993)                  | 4.10             |
-| Murder in the First (1995)        | 4.03             |
-| Fargo (1996)                      | 3.99             |
-| Lion King, The (1994)             | 3.98             |
-
-## User 22 Recommendations
-| Movie                              | Predicted Rating |
-|------------------------------------|------------------|
-| Empire Strikes Back, The (1980)   | 5.00             |
-| Star Wars (1977)                  | 5.00             |
-| Princess Bride, The (1987)        | 4.93             |
-| Return of the Jedi (1983)         | 4.92             |
-| Raiders of the Lost Ark (1981)    | 4.91             |
-| Terminator 2: Judgment Day (1991) | 4.80             |
-| Monty Python and the Holy Grail (1974) | 4.76         |
-| Godfather, The (1972)             | 4.75             |
-| Lawrence of Arabia (1962)         | 4.62             |
-| Butch Cassidy and the Sundance Kid (1969) | 4.56       |
-
-## User 244 Recommendations
-| Movie                              | Predicted Rating |
-|------------------------------------|------------------|
-| Shawshank Redemption, The (1994)  | 5.00             |
-| Schindler's List (1993)           | 5.00             |
-| Dead Man Walking (1995)           | 5.00             |
-| Blade Runner (1982)               | 4.95             |
-| Clockwork Orange, A (1971)        | 4.92             |
-| One Flew Over the Cuckoo's Nest (1975) | 4.90         |
-| Wrong Trousers, The (1993)        | 4.90             |
-| Star Wars (1977)                  | 4.89             |
-| Pulp Fiction (1994)               | 4.74             |
-| Wallace & Gromit: The Best of Aardman Animation (1996) | 4.70 |
-
-## User 166 Recommendations
-| Movie                              | Predicted Rating |
-|------------------------------------|------------------|
-| Titanic (1997)                    | 4.53             |
-| Air Force One (1997)              | 4.43             |
-| Apt Pupil (1998)                  | 4.26             |
-| Conspiracy Theory (1997)          | 4.18             |
-| Contact (1997)                    | 4.13             |
-| Wag the Dog (1997)                | 3.87             |
-| Murder at 1600 (1997)             | 3.80             |
-| Scream (1996)                     | 3.77             |
-| Tomorrow Never Dies (1997)        | 3.72             |
-| Dante's Peak (1997)               | 3.53             |
-
-
-Model SVD dipilih untuk rekomendasi karena kemampuannya menangani sparsity dan memberikan prediksi yang lebih akurat serta personal. Pendekatan ini sangat cocok untuk implementasi sistem rekomendasi skala besar.
-
----
 ## Kesimpulan Umum
 - **Problem Statement Terjawab**: Model NMF dan SVD menunjukkan kemampuan menangani tantangan utama dalam sistem rekomendasi.
 - **Goals Tercapai**: Sistem rekomendasi yang efektif, personal, dan skalabel berhasil dikembangkan.
